@@ -2,11 +2,11 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [master, develop]
   pull_request:
-    branches: [ main, develop ]
+    branches: [master, develop]
   release:
-    types: [ published ]
+    types: [published]
 
 env:
   PYTHON_DEFAULT_VERSION: "3.11"
@@ -16,49 +16,49 @@ jobs:
     name: Code Quality & Linting
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ env.PYTHON_DEFAULT_VERSION }}
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_DEFAULT_VERSION }}
 
-    - name: Cache pip dependencies
-      uses: actions/cache@v3
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-lint-${{ hashFiles('requirements-dev.txt') }}
-        restore-keys: |
-          ${{ runner.os }}-pip-lint-
-          ${{ runner.os }}-pip-
+      - name: Cache pip dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-lint-${{ hashFiles('requirements-dev.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-lint-
+            ${{ runner.os }}-pip-
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements-dev.txt
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
 
-    - name: Run Black (Code Formatting)
-      run: black --check --diff ssh_manager.py ssh_gui.py tests/
+      - name: Run Black (Code Formatting)
+        run: black --check --diff ssh_manager.py ssh_gui.py tests/
 
-    - name: Run isort (Import Sorting)
-      run: isort --check-only --diff ssh_manager.py ssh_gui.py tests/
+      - name: Run isort (Import Sorting)
+        run: isort --check-only --diff ssh_manager.py ssh_gui.py tests/
 
-    - name: Run flake8 (Style & Complexity)
-      run: flake8 ssh_manager.py ssh_gui.py tests/
+      - name: Run flake8 (Style & Complexity)
+        run: flake8 ssh_manager.py ssh_gui.py tests/
 
-    - name: Run mypy (Type Checking)
-      run: mypy ssh_manager.py ssh_gui.py --ignore-missing-imports
+      - name: Run mypy (Type Checking)
+        run: mypy ssh_manager.py ssh_gui.py --ignore-missing-imports
 
-    - name: Run bandit (Security Linting)
-      run: bandit -r ssh_manager.py ssh_gui.py -f json -o bandit-report.json
-      continue-on-error: true
+      - name: Run bandit (Security Linting)
+        run: bandit -r ssh_manager.py ssh_gui.py -f json -o bandit-report.json
+        continue-on-error: true
 
-    - name: Upload bandit results
-      uses: actions/upload-artifact@v3
-      if: always()
-      with:
-        name: bandit-report
-        path: bandit-report.json
+      - name: Upload bandit results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: bandit-report
+          path: bandit-report.json
 
   test:
     name: Test Suite
@@ -82,111 +82,111 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ matrix.python-version }}
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
 
-    - name: Cache pip dependencies
-      uses: actions/cache@v3
-      with:
-        path: |
-          ~/.cache/pip
-          ~/.local/share/virtualenvs
-        key: ${{ runner.os }}-py${{ matrix.python-version }}-pip-${{ hashFiles('requirements-dev.txt') }}
-        restore-keys: |
-          ${{ runner.os }}-py${{ matrix.python-version }}-pip-
-          ${{ runner.os }}-pip-
+      - name: Cache pip dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/pip
+            ~/.local/share/virtualenvs
+          key: ${{ runner.os }}-py${{ matrix.python-version }}-pip-${{ hashFiles('requirements-dev.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-py${{ matrix.python-version }}-pip-
+            ${{ runner.os }}-pip-
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements-dev.txt
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
 
-    - name: Create test directories
-      run: |
-        mkdir -p test-results
-        mkdir -p test-coverage
+      - name: Create test directories
+        run: |
+          mkdir -p test-results
+          mkdir -p test-coverage
 
-    - name: Run unit tests
-      run: |
-        pytest tests/ \
-          --verbose \
-          --tb=short \
-          --cov=ssh_manager \
-          --cov=ssh_gui \
-          --cov-report=xml:test-coverage/coverage.xml \
-          --cov-report=html:test-coverage/htmlcov \
-          --cov-report=term-missing \
-          --junit-xml=test-results/junit.xml \
-          -m "not slow and not network"
+      - name: Run unit tests
+        run: |
+          pytest tests/ \
+            --verbose \
+            --tb=short \
+            --cov=ssh_manager \
+            --cov=ssh_gui \
+            --cov-report=xml:test-coverage/coverage.xml \
+            --cov-report=html:test-coverage/htmlcov \
+            --cov-report=term-missing \
+            --junit-xml=test-results/junit.xml \
+            -m "not slow and not network"
 
-    - name: Run integration tests
-      run: |
-        pytest tests/test_integration.py \
-          --verbose \
-          --tb=short \
-          --junit-xml=test-results/integration-junit.xml
+      - name: Run integration tests
+        run: |
+          pytest tests/test_integration.py \
+            --verbose \
+            --tb=short \
+            --junit-xml=test-results/integration-junit.xml
 
-    - name: Run CLI tests
-      run: |
-        pytest tests/test_cli.py \
-          --verbose \
-          --tb=short \
-          --junit-xml=test-results/cli-junit.xml
+      - name: Run CLI tests
+        run: |
+          pytest tests/test_cli.py \
+            --verbose \
+            --tb=short \
+            --junit-xml=test-results/cli-junit.xml
 
-    - name: Upload test results
-      uses: actions/upload-artifact@v3
-      if: always()
-      with:
-        name: test-results-${{ matrix.os }}-py${{ matrix.python-version }}
-        path: |
-          test-results/
-          test-coverage/
+      - name: Upload test results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: test-results-${{ matrix.os }}-py${{ matrix.python-version }}
+          path: |
+            test-results/
+            test-coverage/
 
-    - name: Upload coverage to Codecov
-      if: matrix.os == 'ubuntu-latest' && matrix.python-version == env.PYTHON_DEFAULT_VERSION
-      uses: codecov/codecov-action@v3
-      with:
-        file: test-coverage/coverage.xml
-        flags: unittests
-        name: codecov-umbrella
-        fail_ci_if_error: false
+      - name: Upload coverage to Codecov
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == env.PYTHON_DEFAULT_VERSION
+        uses: codecov/codecov-action@v3
+        with:
+          file: test-coverage/coverage.xml
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: false
 
   performance:
     name: Performance Tests
     needs: lint
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/master'
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ env.PYTHON_DEFAULT_VERSION }}
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_DEFAULT_VERSION }}
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements-dev.txt
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
 
-    - name: Run performance tests
-      run: |
-        pytest tests/ \
-          -m "slow" \
-          --benchmark-only \
-          --benchmark-json=performance-results.json \
-          --verbose
+      - name: Run performance tests
+        run: |
+          pytest tests/ \
+            -m "slow" \
+            --benchmark-only \
+            --benchmark-json=performance-results.json \
+            --verbose
 
-    - name: Upload performance results
-      uses: actions/upload-artifact@v3
-      with:
-        name: performance-results
-        path: performance-results.json
+      - name: Upload performance results
+        uses: actions/upload-artifact@v3
+        with:
+          name: performance-results
+          path: performance-results.json
 
   security:
     name: Security Scan
@@ -194,108 +194,108 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ env.PYTHON_DEFAULT_VERSION }}
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_DEFAULT_VERSION }}
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements-dev.txt
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
 
-    - name: Run safety check
-      run: |
-        safety check --json --output safety-report.json
-      continue-on-error: true
+      - name: Run safety check
+        run: |
+          safety check --json --output safety-report.json
+        continue-on-error: true
 
-    - name: Run bandit security linter
-      run: |
-        bandit -r ssh_manager.py ssh_gui.py \
-          -f json -o bandit-security-report.json \
-          -ll -i
-      continue-on-error: true
+      - name: Run bandit security linter
+        run: |
+          bandit -r ssh_manager.py ssh_gui.py \
+            -f json -o bandit-security-report.json \
+            -ll -i
+        continue-on-error: true
 
-    - name: Upload security results
-      uses: actions/upload-artifact@v3
-      if: always()
-      with:
-        name: security-reports
-        path: |
-          safety-report.json
-          bandit-security-report.json
+      - name: Upload security results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: security-reports
+          path: |
+            safety-report.json
+            bandit-security-report.json
 
   functional:
     name: Functional Tests
     needs: test
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/master'
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ env.PYTHON_DEFAULT_VERSION }}
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_DEFAULT_VERSION }}
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements-dev.txt
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
 
-    - name: Install SSH Profile Manager
-      run: |
-        chmod +x install.sh
-        ./install.sh
+      - name: Install SSH Profile Manager
+        run: |
+          chmod +x install.sh
+          ./install.sh
 
-    - name: Test CLI Installation
-      run: |
-        export PATH="$HOME/.local/bin:$PATH"
-        ssh-manager --help
-        ssh-gui --help || echo "GUI help not available in headless environment"
+      - name: Test CLI Installation
+        run: |
+          export PATH="$HOME/.local/bin:$PATH"
+          ssh-manager --help
+          ssh-gui --help || echo "GUI help not available in headless environment"
 
-    - name: Test Basic CLI Operations
-      run: |
-        export PATH="$HOME/.local/bin:$PATH"
+      - name: Test Basic CLI Operations
+        run: |
+          export PATH="$HOME/.local/bin:$PATH"
 
-        # Test adding profiles
-        ssh-manager add test-functional test.example.com testuser
-        ssh-manager add test-with-key key.example.com keyuser -i ~/.ssh/test_key
-        ssh-manager add test-with-port port.example.com portuser -p 2222
+          # Test adding profiles
+          ssh-manager add test-functional test.example.com testuser
+          ssh-manager add test-with-key key.example.com keyuser -i ~/.ssh/test_key
+          ssh-manager add test-with-port port.example.com portuser -p 2222
 
-        # Test listing profiles
-        ssh-manager list
+          # Test listing profiles
+          ssh-manager list
 
-        # Test search
-        ssh-manager search test
+          # Test search
+          ssh-manager search test
 
-        # Test stats
-        ssh-manager stats
+          # Test stats
+          ssh-manager stats
 
-        # Test dry run connection
-        ssh-manager connect test-functional --dry-run
+          # Test dry run connection
+          ssh-manager connect test-functional --dry-run
 
-        # Test profile removal
-        ssh-manager remove test-functional
+          # Test profile removal
+          ssh-manager remove test-functional
 
-    - name: Test Configuration Persistence
-      run: |
-        export PATH="$HOME/.local/bin:$PATH"
+      - name: Test Configuration Persistence
+        run: |
+          export PATH="$HOME/.local/bin:$PATH"
 
-        # Add profile
-        ssh-manager add persistence-test persist.example.com persistuser
+          # Add profile
+          ssh-manager add persistence-test persist.example.com persistuser
 
-        # Verify it exists
-        ssh-manager list | grep persistence-test
+          # Verify it exists
+          ssh-manager list | grep persistence-test
 
-        # Check config file exists
-        test -f ~/.config/ssh-manager/profiles.json
+          # Check config file exists
+          test -f ~/.config/ssh-manager/profiles.json
 
-        # Verify JSON is valid
-        python -m json.tool ~/.config/ssh-manager/profiles.json > /dev/null
+          # Verify JSON is valid
+          python -m json.tool ~/.config/ssh-manager/profiles.json > /dev/null
 
   compatibility:
     name: Compatibility Tests
@@ -303,156 +303,156 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Test with minimum Python version
-      uses: actions/setup-python@v4
-      with:
-        python-version: "3.8"
+      - name: Test with minimum Python version
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.8"
 
-    - name: Test basic functionality on Python 3.8
-      run: |
-        python -c "
-        import sys
-        print(f'Python version: {sys.version}')
+      - name: Test basic functionality on Python 3.8
+        run: |
+          python -c "
+          import sys
+          print(f'Python version: {sys.version}')
 
-        # Test imports
-        from ssh_manager import SSHProfile, SSHManager
-        print('✓ Core imports successful')
+          # Test imports
+          from ssh_manager import SSHProfile, SSHManager
+          print('✓ Core imports successful')
 
-        # Test basic functionality
-        profile = SSHProfile('test', 'example.com', 'user')
-        print(f'✓ Profile created: {profile.name}')
+          # Test basic functionality
+          profile = SSHProfile('test', 'example.com', 'user')
+          print(f'✓ Profile created: {profile.name}')
 
-        # Test command generation
-        cmd = profile.generate_ssh_command()
-        print(f'✓ SSH command: {cmd}')
+          # Test command generation
+          cmd = profile.generate_ssh_command()
+          print(f'✓ SSH command: {cmd}')
 
-        print('✓ All compatibility tests passed')
-        "
+          print('✓ All compatibility tests passed')
+          "
 
   documentation:
     name: Documentation Tests
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/master'
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ env.PYTHON_DEFAULT_VERSION }}
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_DEFAULT_VERSION }}
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements-dev.txt
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
 
-    - name: Test docstring coverage
-      run: |
-        python -c "
-        import ssh_manager
-        import inspect
+      - name: Test docstring coverage
+        run: |
+          python -c "
+          import ssh_manager
+          import inspect
 
-        def check_docstrings(module):
-            missing_docs = []
-            for name, obj in inspect.getmembers(module):
-                if inspect.isclass(obj) or inspect.isfunction(obj):
-                    if not obj.__doc__ or len(obj.__doc__.strip()) < 10:
-                        missing_docs.append(f'{module.__name__}.{name}')
-            return missing_docs
+          def check_docstrings(module):
+              missing_docs = []
+              for name, obj in inspect.getmembers(module):
+                  if inspect.isclass(obj) or inspect.isfunction(obj):
+                      if not obj.__doc__ or len(obj.__doc__.strip()) < 10:
+                          missing_docs.append(f'{module.__name__}.{name}')
+              return missing_docs
 
-        missing = check_docstrings(ssh_manager)
-        if missing:
-            print(f'⚠️  Missing or insufficient docstrings: {missing}')
-        else:
-            print('✓ All major functions and classes have docstrings')
-        "
+          missing = check_docstrings(ssh_manager)
+          if missing:
+              print(f'⚠️  Missing or insufficient docstrings: {missing}')
+          else:
+              print('✓ All major functions and classes have docstrings')
+          "
 
-    - name: Test README examples
-      run: |
-        # Extract and test code examples from README if they exist
-        if [ -f README.md ]; then
-          echo "✓ README.md exists"
-          # Add more README testing here
-        fi
+      - name: Test README examples
+        run: |
+          # Extract and test code examples from README if they exist
+          if [ -f README.md ]; then
+            echo "✓ README.md exists"
+            # Add more README testing here
+          fi
 
   build:
     name: Build Distribution
     needs: [test, security, functional]
     runs-on: ubuntu-latest
-    if: github.event_name == 'release' || github.ref == 'refs/heads/main'
+    if: github.event_name == 'release' || github.ref == 'refs/heads/master'
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ env.PYTHON_DEFAULT_VERSION }}
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_DEFAULT_VERSION }}
 
-    - name: Install build dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install build twine
+      - name: Install build dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install build twine
 
-    - name: Create distribution package
-      run: |
-        # Create a simple setup.py for distribution
-        cat > setup.py << 'EOF'
-        from setuptools import setup, find_packages
+      - name: Create distribution package
+        run: |
+          # Create a simple setup.py for distribution
+          cat > setup.py << 'EOF'
+          from setuptools import setup, find_packages
 
-        with open("README.md", "r", encoding="utf-8") as fh:
-            long_description = fh.read()
+          with open("README.md", "r", encoding="utf-8") as fh:
+              long_description = fh.read()
 
-        setup(
-            name="ssh-profile-manager",
-            version="2.0.0",
-            author="SSH Profile Manager Team",
-            author_email="zeloras@gmail.com",
-            description="A powerful SSH connection manager with GUI and CLI interfaces",
-            long_description=long_description,
-            long_description_content_type="text/markdown",
-            url="https://github.com/yourusername/ssh-profile-manager",
-            py_modules=["ssh_manager", "ssh_gui"],
-            classifiers=[
-                "Development Status :: 4 - Beta",
-                "Intended Audience :: Developers",
-                "Intended Audience :: System Administrators",
-                "License :: OSI Approved :: MIT License",
-                "Operating System :: OS Independent",
-                "Programming Language :: Python :: 3",
-                "Programming Language :: Python :: 3.8",
-                "Programming Language :: Python :: 3.9",
-                "Programming Language :: Python :: 3.10",
-                "Programming Language :: Python :: 3.11",
-                "Programming Language :: Python :: 3.12",
-                "Topic :: System :: Networking",
-                "Topic :: System :: Systems Administration",
-                "Topic :: Utilities",
-            ],
-            python_requires=">=3.8",
-            entry_points={
-                "console_scripts": [
-                    "ssh-manager=ssh_manager:main",
-                    "ssh-gui=ssh_gui:main",
-                ],
-            },
-        )
-        EOF
+          setup(
+              name="ssh-profile-manager",
+              version="2.0.0",
+              author="SSH Profile Manager Team",
+              author_email="zeloras@gmail.com",
+              description="A powerful SSH connection manager with GUI and CLI interfaces",
+              long_description=long_description,
+              long_description_content_type="text/markdown",
+              url="https://github.com/yourusername/ssh-profile-manager",
+              py_modules=["ssh_manager", "ssh_gui"],
+              classifiers=[
+                  "Development Status :: 4 - Beta",
+                  "Intended Audience :: Developers",
+                  "Intended Audience :: System Administrators",
+                  "License :: OSI Approved :: MIT License",
+                  "Operating System :: OS Independent",
+                  "Programming Language :: Python :: 3",
+                  "Programming Language :: Python :: 3.8",
+                  "Programming Language :: Python :: 3.9",
+                  "Programming Language :: Python :: 3.10",
+                  "Programming Language :: Python :: 3.11",
+                  "Programming Language :: Python :: 3.12",
+                  "Topic :: System :: Networking",
+                  "Topic :: System :: Systems Administration",
+                  "Topic :: Utilities",
+              ],
+              python_requires=">=3.8",
+              entry_points={
+                  "console_scripts": [
+                      "ssh-manager=ssh_manager:main",
+                      "ssh-gui=ssh_gui:main",
+                  ],
+              },
+          )
+          EOF
 
-    - name: Build package
-      run: python -m build
+      - name: Build package
+        run: python -m build
 
-    - name: Check package
-      run: python -m twine check dist/*
+      - name: Check package
+        run: python -m twine check dist/*
 
-    - name: Upload build artifacts
-      uses: actions/upload-artifact@v3
-      with:
-        name: dist-packages
-        path: dist/
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: dist-packages
+          path: dist/
 
   deploy:
     name: Deploy to PyPI
@@ -462,16 +462,16 @@ jobs:
     environment: production
 
     steps:
-    - name: Download build artifacts
-      uses: actions/download-artifact@v3
-      with:
-        name: dist-packages
-        path: dist/
+      - name: Download build artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: dist-packages
+          path: dist/
 
-    - name: Publish to PyPI
-      uses: pypa/gh-action-pypi-publish@release/v1
-      with:
-        password: ${{ secrets.PYPI_API_TOKEN }}
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
 
   notify:
     name: Notification
@@ -480,15 +480,15 @@ jobs:
     if: always()
 
     steps:
-    - name: Notify on success
-      if: ${{ needs.test.result == 'success' && needs.security.result == 'success' }}
-      run: |
-        echo "✅ All tests passed successfully!"
-        echo "🚀 SSH Profile Manager is ready for deployment"
+      - name: Notify on success
+        if: ${{ needs.test.result == 'success' && needs.security.result == 'success' }}
+        run: |
+          echo "✅ All tests passed successfully!"
+          echo "🚀 SSH Profile Manager is ready for deployment"
 
-    - name: Notify on failure
-      if: ${{ needs.test.result == 'failure' || needs.security.result == 'failure' }}
-      run: |
-        echo "❌ Some tests failed"
-        echo "🔧 Please check the failed jobs and fix the issues"
-        exit 1
+      - name: Notify on failure
+        if: ${{ needs.test.result == 'failure' || needs.security.result == 'failure' }}
+        run: |
+          echo "❌ Some tests failed"
+          echo "🔧 Please check the failed jobs and fix the issues"
+          exit 1
