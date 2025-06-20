@@ -1,9 +1,10 @@
 # SSH Profile Manager
 
-A terminal SSH connection manager with GUI interface and advanced features.
+A simple SSH connection manager for your terminal.
 
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Tests](https://github.com/yourusername/ssh-profile-manager/actions/workflows/ci.yml/badge.svg)](https://github.com/yourusername/ssh-profile-manager/actions/workflows/ci.yml)
 
 ## ✨ Features
 
@@ -20,9 +21,16 @@ A terminal SSH connection manager with GUI interface and advanced features.
 ### Installation
 
 ```bash
+# Clone the repository
 git clone <repository>
 cd ssh-profile-manager
-./install.sh
+
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install development dependencies
+pip install -r requirements-dev.txt
 ```
 
 ### Usage
@@ -65,9 +73,39 @@ ssh-manager delete myserver                 # Remove profile
 
 Profiles stored in: `~/.config/ssh-manager/profiles.json`
 
-## 🤝 Contributing
+## 🧪 Testing
 
-Fork, make changes, submit PR. See [CONTRIBUTING.md](CONTRIBUTING.md).
+```bash
+# Make sure you're in your virtual environment
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Run all tests
+pytest
+
+# Run specific test types
+pytest -m unit          # Unit tests
+pytest -m integration   # Integration tests
+pytest -m cli           # CLI tests
+
+# Test with coverage
+pytest --cov=ssh_manager --cov=ssh_gui --cov-report=term
+```
+
+## 🛠️ Code Quality
+
+```bash
+# Check code formatting
+black --check ssh_manager.py ssh_gui.py tests/
+
+# Apply code formatting
+black ssh_manager.py ssh_gui.py tests/
+
+# Run linter
+flake8 ssh_manager.py ssh_gui.py tests/
+
+# Type checking
+mypy ssh_manager.py ssh_gui.py
+```
 
 ## 📄 License
 
@@ -78,6 +116,16 @@ MIT License - see [LICENSE](LICENSE) file.
 - Issues: GitHub Issues
 - Questions: GitHub Discussions
 
+## 🛡️ Security
+
+```bash
+# Security audit
+bandit -r ssh_manager.py ssh_gui.py
+
+# Dependencies security check
+safety check
+```
+
 ---
 
-Made with 🐍 Python and vibe
+Made with 🐍 Python and ❤️

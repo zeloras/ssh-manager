@@ -7,15 +7,19 @@ for all test modules in the SSH Profile Manager test suite.
 
 import json
 import os
+import sys
 import tempfile
-import uuid
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
-import pytest
-from freezegun import freeze_time
+# Add pytest and freezegun imports with try/except to handle potential missing dependencies
+try:
+    import pytest
+    from freezegun import freeze_time
+except ImportError:
+    print("Error: Required testing packages not found. Please install requirements-dev.txt")
+    sys.exit(1)
 
 # Import the modules we're testing
 import sys
@@ -188,8 +192,11 @@ def mock_datetime():
 @pytest.fixture
 def cli_runner():
     """Create a CLI test runner."""
-    from click.testing import CliRunner
-    return CliRunner()
+    try:
+        from click.testing import CliRunner
+        return CliRunner()
+    except ImportError:
+        pytest.skip("click package not installed, skipping CLI tests")
 
 
 @pytest.fixture

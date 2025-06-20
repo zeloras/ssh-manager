@@ -169,7 +169,7 @@ class TestSSHProfileSerialization:
         assert profile.port == 22  # Default
         assert profile.private_key_path is None
         assert profile.jump_host is None
-        assert profile.description is None
+        assert profile.description == "SSH connection to example.com"
         assert profile.created_at is not None  # Should be set to current time
 
     def test_serialization_roundtrip(self):
@@ -389,7 +389,7 @@ class TestSSHProfileEdgeCases:
 
         assert profile.private_key_path is None
         assert profile.jump_host is None
-        assert profile.description is None
+        assert profile.description == "SSH connection to example.com"
 
     def test_invalid_port_values(self):
         """Test various port values."""

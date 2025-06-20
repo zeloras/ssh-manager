@@ -22,10 +22,6 @@ flake8-simplify>=0.20.0
 # Coverage Reporting
 coverage[toml]>=7.3.0
 
-# Documentation
-sphinx>=7.1.0
-sphinx-rtd-theme>=1.3.0
-
 # Security
 bandit>=1.7.5
 safety>=2.3.0
@@ -33,25 +29,11 @@ safety>=2.3.0
 # Mock and Testing Utilities
 freezegun>=1.2.2
 parameterized>=0.9.0
-
-# CLI Testing
-click-testing>=0.1.1
-
-# Build and Release Tools
-build>=1.0.0
-twine>=4.0.0
-wheel>=0.41.0
+responses>=0.23.0
+httpx>=0.25.0
 
 # Pre-commit Hooks
 pre-commit>=3.5.0
 
 # Type Stubs
 types-all>=1.0.0
-
-# Development Tools
-tox>=4.11.0
-pip-tools>=7.3.0
-
-# Additional Testing Utilities
-responses>=0.23.0
-httpx>=0.25.0
