@@ -1,0 +1,54 @@
+{
+  "version": "1.0",
+  "profiles": [
+    {
+      "id": "corrupted-profile-1",
+      "name": "incomplete-profile",
+      "host": "incomplete.example.com"
+      // Missing required fields like username
+      // Missing closing brace and comma
+    {
+      "id": "corrupted-profile-2",
+      "name": "duplicate-key",
+      "host": "duplicate.example.com",
+      "username": "user",
+      "port": 22,
+      "port": 2222,
+      "description": "Profile with duplicate port key"
+    },
+    {
+      "id": "corrupted-profile-3",
+      "name": "invalid-types",
+      "host": "invalid-types.example.com",
+      "username": "user",
+      "port": "not-a-number",
+      "private_key_path": 12345,
+      "jump_host": true,
+      "description": "Profile with invalid data types"
+    },
+    {
+      "id": "corrupted-profile-4",
+      "name": "missing-quotes",
+      "host": missing-quotes.example.com,
+      "username": user-without-quotes,
+      "port": 22,
+      "description": "Profile with missing quotes"
+    },
+    {
+      "id": "corrupted-profile-5",
+      "name": "extra-comma",
+      "host": "extra-comma.example.com",
+      "username": "user",
+      "port": 22,
+      "description": "Profile with extra comma",
+    },
+    {
+      "id": "corrupted-profile-6",
+      "name": "unicode-escape-error",
+      "host": "unicode.example.com",
+      "username": "user",
+      "description": "Profile with invalid unicode escape \uXXXX"
+    }
+  ]
+  // Missing closing brace for profiles array
+  // Missing closing brace for root object

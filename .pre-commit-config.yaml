@@ -1,0 +1,248 @@
+# Pre-commit hooks configuration for SSH Profile Manager
+# Install with: pre-commit install
+# Run manually with: pre-commit run --all-files
+
+repos:
+  # Built-in hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+        name: Remove trailing whitespace
+      - id: end-of-file-fixer
+        name: Fix end of files
+      - id: check-yaml
+        name: Check YAML syntax
+      - id: check-json
+        name: Check JSON syntax
+      - id: check-toml
+        name: Check TOML syntax
+      - id: check-merge-conflict
+        name: Check for merge conflicts
+      - id: check-added-large-files
+        name: Check for large files
+        args: ['--maxkb=1000']
+      - id: check-case-conflict
+        name: Check for case conflicts
+      - id: check-executables-have-shebangs
+        name: Check executables have shebangs
+      - id: check-shebang-scripts-are-executable
+        name: Check shebang scripts are executable
+      - id: fix-byte-order-marker
+        name: Fix UTF-8 byte order marker
+      - id: mixed-line-ending
+        name: Fix mixed line endings
+      - id: check-docstring-first
+        name: Check docstring is first
+
+  # Python code formatting
+  - repo: https://github.com/psf/black
+    rev: 23.12.1
+    hooks:
+      - id: black
+        name: Format Python code with Black
+        language_version: python3
+        args: [--line-length=88]
+
+  # Import sorting
+  - repo: https://github.com/pycqa/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+        name: Sort Python imports with isort
+        args: [--profile=black, --line-length=88]
+
+  # Python linting
+  - repo: https://github.com/pycqa/flake8
+    rev: 7.0.0
+    hooks:
+      - id: flake8
+        name: Lint Python code with Flake8
+        args: [--max-line-length=88, --extend-ignore=E203,E501,W503]
+        additional_dependencies:
+          - flake8-docstrings
+          - flake8-bugbear
+          - flake8-comprehensions
+          - flake8-simplify
+
+  # Type checking
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.8.0
+    hooks:
+      - id: mypy
+        name: Type check with MyPy
+        args: [--ignore-missing-imports, --no-strict-optional]
+        additional_dependencies: [types-all]
+
+  # Security linting
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.7.5
+    hooks:
+      - id: bandit
+        name: Security check with Bandit
+        args: [-ll, -x, tests/]
+
+  # Dependency vulnerability checking
+  - repo: https://github.com/Lucas-C/pre-commit-hooks-safety
+    rev: v1.3.2
+    hooks:
+      - id: python-safety-dependencies-check
+        name: Check for known security vulnerabilities
+
+  # Shell script linting (if any shell scripts exist)
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.9.0.6
+    hooks:
+      - id: shellcheck
+        name: Lint shell scripts
+        files: \.(sh|bash)$
+
+  # Markdown linting
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.38.0
+    hooks:
+      - id: markdownlint
+        name: Lint Markdown files
+        args: [--fix]
+        files: \.md$
+
+  # YAML linting
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.33.0
+    hooks:
+      - id: yamllint
+        name: Lint YAML files
+        args: [-d, relaxed]
+
+  # Secrets detection
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.4.0
+    hooks:
+      - id: detect-secrets
+        name: Detect secrets
+        args: [--baseline, .secrets.baseline]
+        exclude: package.lock.json
+
+  # Conventional commits
+  - repo: https://github.com/compilerla/conventional-pre-commit
+    rev: v3.0.0
+    hooks:
+      - id: conventional-pre-commit
+        name: Check conventional commit format
+        stages: [commit-msg]
+
+  # Local hooks for project-specific checks
+  - repo: local
+    hooks:
+      - id: pytest-check
+        name: Run pytest
+        entry: pytest
+        language: system
+        types: [python]
+        pass_filenames: false
+        args: [tests/, --tb=short, -x]
+
+      - id: no-debug-statements
+        name: Check for debug statements
+        entry: grep -n "pdb\|debugger\|breakpoint"
+        language: system
+        types: [python]
+        files: ^(?!tests/).*\.py$
+
+      - id: requirements-txt-fixer
+        name: Fix requirements.txt
+        entry: requirements-txt-fixer
+        language: python
+        files: requirements.*\.txt$
+        additional_dependencies: [requirements-txt-fixer]
+
+      - id: check-executables
+        name: Check that executables are executable
+        entry: |
+          python -c "
+          import os
+          import sys
+          files = ['ssh_manager.py', 'ssh_gui.py', 'install.sh', 'run_tests.py']
+          for f in files:
+              if os.path.exists(f) and not os.access(f, os.X_OK):
+                  print(f'File {f} should be executable')
+                  sys.exit(1)
+          "
+        language: system
+        pass_filenames: false
+
+      - id: check-version-consistency
+        name: Check version consistency
+        entry: |
+          python -c "
+          import re
+          import sys
+          files_to_check = {
+              'ssh_manager.py': r'__version__ = [\"\'](.*?)[\"\']',
+              'ssh_gui.py': r'__version__ = [\"\'](.*?)[\"\']',
+              'pyproject.toml': r'version = [\"\'](.*?)[\"\']'
+          }
+          versions = {}
+          for file, pattern in files_to_check.items():
+              try:
+                  with open(file, 'r') as f:
+                      content = f.read()
+                  match = re.search(pattern, content)
+                  if match:
+                      versions[file] = match.group(1)
+                  else:
+                      print(f'No version found in {file}')
+              except FileNotFoundError:
+                  print(f'File {file} not found')
+
+          if len(set(versions.values())) > 1:
+              print('Version mismatch detected:')
+              for file, version in versions.items():
+                  print(f'  {file}: {version}')
+              sys.exit(1)
+          print('All versions are consistent')
+          "
+        language: system
+        pass_filenames: false
+
+# Configuration for specific hooks
+ci:
+  autofix_commit_msg: |
+    [pre-commit.ci] auto fixes from pre-commit.com hooks
+
+    for more information, see https://pre-commit.ci
+  autofix_prs: true
+  autoupdate_branch: ''
+  autoupdate_commit_msg: '[pre-commit.ci] pre-commit autoupdate'
+  autoupdate_schedule: weekly
+  skip: []
+  submodules: false
+
+# Default language version
+default_language_version:
+  python: python3.11
+
+# Default stages
+default_stages: [commit]
+
+# Minimum pre-commit version
+minimum_pre_commit_version: 3.0.0
+
+# Fail fast - stop after first failure
+fail_fast: false
+
+# Exclude patterns
+exclude: |
+  (?x)^(
+    \.git/.*|
+    \.tox/.*|
+    \.pytest_cache/.*|
+    \.mypy_cache/.*|
+    __pycache__/.*|
+    build/.*|
+    dist/.*|
+    .*\.egg-info/.*|
+    htmlcov/.*|
+    \.coverage.*|
+    tests/data/corrupted_profiles\.json
+  )$
